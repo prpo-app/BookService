@@ -26,6 +26,7 @@ namespace BookService.Controllers
         [HttpGet]
         public int Get()
         {
+//Komentar
             return Random.Shared.Next(-20, 55);
         }
 
