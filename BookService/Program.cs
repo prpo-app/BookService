@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
@@ -16,17 +17,24 @@ var config = new ConfigurationBuilder()
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default"), name: "timescale");
+
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BookService API",
+        Version = "v1"
+    });
+
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
 
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
@@ -87,7 +95,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-//app.UsePathBase("/books"); 
+app.MapHealthChecks("/health");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -95,8 +103,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-//app.Urls.Add("http://+:8080");
 
 //app.UseHttpsRedirection();
 app.UseAuthentication();

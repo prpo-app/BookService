@@ -16,7 +16,6 @@ namespace BookService.Controllers
     {
         private readonly ILogger<BooksController> _logger;
         private readonly IConfiguration _config;
-
         private AppDbContext _context;
 
         public BooksController(ILogger<BooksController> logger, IConfiguration config, AppDbContext context)
@@ -69,7 +68,7 @@ namespace BookService.Controllers
         /// <response code="400">Invalid pagination parameters.</response>
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetBooks(
+        public IActionResult GetBooks(
             [FromQuery] int offset = 0, 
             [FromQuery] int limit = 5,
             [FromQuery] string? author = null,
@@ -87,11 +86,11 @@ namespace BookService.Controllers
             if (!string.IsNullOrWhiteSpace(genre))
                 query = query.Where(b => b.Genre.ToLower() == genre.ToLower());
 
-            var books = await query
-                .OrderBy(b => b.Title)
+            var books = query
+                .OrderBy(b => b.Id)
                 .Skip(offset)
                 .Take(limit)
-                .ToListAsync();
+                .ToList();
 
             return Ok(books);
         }
@@ -131,12 +130,7 @@ namespace BookService.Controllers
             _context.Books.Add(book);
             _context.SaveChanges();
 
-            //return Created();
-            return CreatedAtAction(
-                nameof(GetBook),
-                new { id = book.Id },
-                book
-            );
+            return Created();
         }
 
 
